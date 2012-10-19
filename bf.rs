@@ -1,8 +1,10 @@
 
-use std;
-import io::{ReaderUtil,WriterUtil};
+extern mod std;
+use io::{ReaderUtil,WriterUtil};
 
-fn main(args : ~[~str]) {
+fn main() {
+
+     let args = os::args();
 
     if vec::len(args) != 2 {
             let err = fmt!("usage: %s filename.bf\n",args[0]);
@@ -38,7 +40,7 @@ fn load_program(filename : ~str) -> Option<~[u8]> {
     }
 
     program = vec::filter(program, |c| {
-        let c = c as char; c == '<' || c == '>' || c == '+' || c == '-' || c == '.' || c == ',' || c == '[' || c == ']'
+        let c = *c as char; c == '<' || c == '>' || c == '+' || c == '-' || c == '.' || c == ',' || c == '[' || c == ']'
     });
 
     Some(program)
@@ -53,7 +55,7 @@ fn calculate_offsets(program : ~[u8]) -> ~[uint] {
 
     // group like operations
     for program.eachi |i, p| {
-        if p == prev {
+        if *p == prev {
             count += 1;
         } else {
             let pc = prev as char;
@@ -61,13 +63,13 @@ fn calculate_offsets(program : ~[u8]) -> ~[uint] {
                 offsets[i - count] = count;
             }
             count = 1;
-            prev = p;
+            prev = *p;
         }
     }
 
     // precalculate jump locations
     for program.eachi |i, p| {
-        if p == '[' as u8 {
+        if *p == '[' as u8 {
             let mut dst_ip = i;
 
             let mut seen_open = 0;
@@ -80,7 +82,7 @@ fn calculate_offsets(program : ~[u8]) -> ~[uint] {
                 if program[dst_ip] == '[' as u8 { seen_open += 1; }
                 if program[dst_ip] == ']' as u8 { seen_open -= 1; }
             }
-        } else if p == ']' as u8 {
+        } else if *p == ']' as u8 {
             let mut dst_ip = i;
 
             let mut seen_close = 0;

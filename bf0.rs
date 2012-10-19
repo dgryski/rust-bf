@@ -1,8 +1,10 @@
 
-use std;
-import io::{ReaderUtil,WriterUtil};
+extern mod std;
+use io::{ReaderUtil,WriterUtil};
 
-fn main(args : ~[~str]) {
+fn main() {
+
+    let args = os::args();
 
     let mut mem = vec::from_elem(1024, 0u8);
 
