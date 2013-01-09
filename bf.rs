@@ -26,7 +26,7 @@ fn main() {
 
 }
 
-fn load_program(filename : ~str) -> Option<~[u8]> {
+fn load_program(filename : &str) -> Option<~[u8]> {
 
     let mut program : ~[u8];
 
@@ -46,7 +46,7 @@ fn load_program(filename : ~str) -> Option<~[u8]> {
     Some(program)
 }
 
-fn calculate_offsets(program : ~[u8]) -> ~[uint] {
+fn calculate_offsets(program : &[u8]) -> ~[uint] {
 
     let mut offsets = vec::from_elem(vec::len(program), 0);
 
@@ -102,7 +102,7 @@ fn calculate_offsets(program : ~[u8]) -> ~[uint] {
 }
 
 
-fn run_program(program : ~[u8], offsets : ~[uint]) {
+fn run_program(program : &[u8], offsets : &[uint]) {
 
     let mut ip = 0;
     let mut p = 0;
@@ -127,7 +127,7 @@ fn run_program(program : ~[u8], offsets : ~[uint]) {
     }
 }
 
-fn output_c_code(program : ~[u8], offsets : ~[uint]) {
+fn output_c_code(program : &[u8], offsets : &[uint]) {
     io::println("
 #include <stdio.h>
 unsigned char mem [1024];
