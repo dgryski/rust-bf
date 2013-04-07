@@ -1,6 +1,6 @@
 
 extern mod std;
-use io::{ReaderUtil,WriterUtil};
+use core::io::{ReaderUtil,WriterUtil};
 
 fn main() {
 
@@ -16,7 +16,7 @@ fn main() {
     
     match load_program(args[1]) {
         Some(p) => { program = copy p; }
-        None => { fail ~"no program loaded" }
+        None => { fail!( ~"no program loaded" ) }
     }
 
     let offsets = calculate_offsets(program);
@@ -98,7 +98,7 @@ fn calculate_offsets(program : &[u8]) -> ~[uint] {
         }
     }
 
-    move offsets
+    offsets
 }
 
 
@@ -110,7 +110,7 @@ fn run_program(program : &[u8], offsets : &[uint]) {
     let mut mem = vec::from_elem(1024, 0u8);
     let program_size = vec::len(program);
 
-    while ip >= 0 && ip < program_size {
+    while ip < program_size {
 
         match program[ip] {
           '<' as u8 => { p -= offsets[ip]; ip += offsets[ip] - 1; }
@@ -121,7 +121,7 @@ fn run_program(program : &[u8], offsets : &[uint]) {
           ',' as u8 => { let c = io::stdin().read_byte(); mem[p] = c as u8; }
           '[' as u8 => { if mem[p] == 0 { ip = offsets[ip]; } }
           ']' as u8 => { if mem[p] != 0 { ip = offsets[ip]; } }
-          _ => { fail fmt!("unknow char in input: %c", program[ip] as char); }
+          _ => { fail!( fmt!("unknow char in input: %c", program[ip] as char)); }
         }
         ip += 1;
     }
@@ -138,7 +138,7 @@ unsigned char *p = mem;
     let mut ip = 0;
     let program_size = vec::len(program);
 
-    while (ip < program_size) {
+    while ip < program_size {
         match program[ip] {
           '<' as u8 => { io::println(fmt!("p -= %u;", offsets[ip])); ip += offsets[ip] - 1; }
           '>' as u8 => { io::println(fmt!("p += %u;", offsets[ip])); ip += offsets[ip] - 1; }
@@ -148,7 +148,7 @@ unsigned char *p = mem;
           ',' as u8 => { io::println("*p = (char)getchar();"); }
           '[' as u8 => { io::println("while(*p) {"); }
           ']' as u8 => { io::println("}"); }
-          _ => { fail fmt!("unknow char in input: %c", program[ip] as char); }
+          _ => { fail!( fmt!("unknow char in input: %c", program[ip] as char)); }
         }
         ip += 1;
     }

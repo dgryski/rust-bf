@@ -1,6 +1,6 @@
 
 extern mod std;
-use io::{ReaderUtil,WriterUtil};
+use core::io::{ReaderUtil,WriterUtil};
 
 fn main() {
 
@@ -24,7 +24,7 @@ fn main() {
     let mut ip = 0;
     let mut p = 0;
 
-    while ip >= 0 && ip < program_size {
+    while ip < program_size {
 
         match program[ip] {
           '<' as u8 => { p -= 1; }
