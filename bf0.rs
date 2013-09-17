@@ -1,6 +1,9 @@
 
 extern mod std;
-use core::io::{ReaderUtil,WriterUtil};
+use std::result;
+use std::vec;
+use std::os;
+use std::io;
 
 fn main() {
 
@@ -10,30 +13,30 @@ fn main() {
 
     let mut program : ~[u8];
 
-    match io::file_reader(&Path(args[1])) {
+    match std::io::file_reader(&Path(args[1])) {
         result::Ok(f) => { program = f.read_whole_stream(); }
         result::Err(e) => {
             let err = fmt!("%s: %s: %s\n",args[0],args[1],e);
-            io::stderr().write_str(err);
+            std::io::stderr().write_str(err);
             return;
         }
     }
 
-    let program_size = vec::len(program);
+    let program_size = program.len();
 
     let mut ip = 0;
     let mut p = 0;
 
     while ip < program_size {
 
-        match program[ip] {
-          '<' as u8 => { p -= 1; }
-          '>' as u8 => { p += 1; }
-          '+' as u8 => { mem[p] += 1; }
-          '-' as u8 => { mem[p] -= 1; }
-          '.' as u8 => { io::print(fmt!("%c",mem[p]as char)) }
-          ',' as u8 => { let c = io::stdin().read_byte(); mem[p] = c as u8; }
-          '[' as u8 => {
+        match program[ip] as char {
+          '<'  => { p -= 1; }
+          '>'  => { p += 1; }
+          '+'  => { mem[p] += 1; }
+          '-'  => { mem[p] -= 1; }
+          '.'  => { io::print(fmt!("%c",mem[p]as char)) }
+          ','  => { let c = io::stdin().read_byte(); mem[p] = c as u8; }
+          '['  => {
             if mem[p] == 0 {
                 let mut seen_open = 0;
                 loop  {
@@ -44,7 +47,7 @@ fn main() {
                 }
             }
           }
-          ']' as u8 => {
+          ']' => {
             if mem[p] != 0 {
                 let mut seen_close = 0;
                 loop  {
