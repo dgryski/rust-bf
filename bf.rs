@@ -2,15 +2,16 @@
 extern mod std;
 use std::io;
 use std::os;
-use std::result;
 use std::vec;
+
+use std::io::File;
 
 fn main() {
 
      let args = os::args();
 
     if args.len() != 2 {
-            let err = fmt!("usage: %s filename.bf\n",args[0]);
+            let err = format!("usage: {} filename.bf\n",args[0]);
             io::stderr().write_str(err);
             return;
     }
@@ -31,20 +32,12 @@ fn main() {
 
 fn load_program(filename : &str) -> Option<~[u8]> {
 
-    let mut program : ~[u8];
-
-    match io::file_reader(&Path(filename)) {
-        result::Ok(f) => { program = f.read_whole_stream(); }
-        result::Err(e) => {
-            let err = fmt!("%s: %s\n",filename,e);
-            io::stderr().write_str(err);
-            return None;
-        }
-    }
+    let mut f = File::open(&Path::new(filename));
+    let mut program = f.read_to_end();
 
     program = program.iter().filter_map(|c| {
         let c = *c as char;
-        c == '<' || c == '>' || c == '+' || c == '-' || c == '.' || c == ',' || c == '[' || c == ']'
+        if (c == '<' || c == '>' || c == '+' || c == '-' || c == '.' || c == ',' || c == '[' || c == ']') { Some(c as u8) } else { None }
     }).to_owned_vec();
 
     Some(program)
@@ -121,11 +114,11 @@ fn run_program(program : &[u8], offsets : &[uint]) {
           '>' => { p += offsets[ip]; ip += offsets[ip] - 1; }
           '+' => { mem[p] += offsets[ip] as u8; ip += offsets[ip] - 1;}
           '-' => { mem[p] -= offsets[ip] as u8; ip += offsets[ip] - 1; }
-          '.' => { io::print(fmt!("%c",mem[p]as char)); }
-          ',' => { let c = io::stdin().read_byte(); mem[p] = c as u8; }
+          '.' => { io::print(format!("{}",mem[p] as char)); }
+          ',' => { let c = io::stdin().read_byte().unwrap(); mem[p] = c; }
           '[' => { if mem[p] == 0 { ip = offsets[ip]; } }
           ']' => { if mem[p] != 0 { ip = offsets[ip]; } }
-          _ => { fail!( fmt!("unknown char in input: %c", program[ip] as char)); }
+          _ => { fail!( format!("unknown char in input: {}", program[ip] as char)); }
         }
         ip += 1;
     }
@@ -144,15 +137,15 @@ unsigned char *p = mem;
 
     while ip < program_size {
         match program[ip] as char {
-          '<' => { io::println(fmt!("p -= %u;", offsets[ip])); ip += offsets[ip] - 1; }
-          '>' => { io::println(fmt!("p += %u;", offsets[ip])); ip += offsets[ip] - 1; }
-          '+' => { io::println(fmt!("*p += %u;", offsets[ip])); ip += offsets[ip] - 1;}
-          '-' => { io::println(fmt!("*p -= %u;", offsets[ip])); ip += offsets[ip] - 1;}
+          '<' => { io::println(format!("p -= {};", offsets[ip])); ip += offsets[ip] - 1; }
+          '>' => { io::println(format!("p += {};", offsets[ip])); ip += offsets[ip] - 1; }
+          '+' => { io::println(format!("*p += {};", offsets[ip])); ip += offsets[ip] - 1;}
+          '-' => { io::println(format!("*p -= {};", offsets[ip])); ip += offsets[ip] - 1;}
           '.' => { io::println("putchar(*p);"); }
           ',' => { io::println("*p = (char)getchar();"); }
           '[' => { io::println("while(*p) {"); }
           ']' => { io::println("}"); }
-          _ => { fail!( fmt!("unknown char in input: %c", program[ip] as char)); }
+          _ => { fail!( format!("unknown char in input: {}", program[ip] as char)); }
         }
         ip += 1;
     }

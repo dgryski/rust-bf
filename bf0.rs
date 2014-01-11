@@ -1,9 +1,10 @@
 
 extern mod std;
-use std::result;
 use std::vec;
 use std::os;
 use std::io;
+
+use std::io::File;
 
 fn main() {
 
@@ -11,17 +12,9 @@ fn main() {
 
     let mut mem = vec::from_elem(1024, 0u8);
 
-    let mut program : ~[u8];
 
-    match std::io::file_reader(&Path(args[1])) {
-        result::Ok(f) => { program = f.read_whole_stream(); }
-        result::Err(e) => {
-            let err = fmt!("%s: %s: %s\n",args[0],args[1],e);
-            std::io::stderr().write_str(err);
-            return;
-        }
-    }
-
+    let mut f = File::open(&Path::new(args[1]));
+    let program = f.read_to_end();
     let program_size = program.len();
 
     let mut ip = 0;
@@ -34,8 +27,8 @@ fn main() {
           '>'  => { p += 1; }
           '+'  => { mem[p] += 1; }
           '-'  => { mem[p] -= 1; }
-          '.'  => { io::print(fmt!("%c",mem[p]as char)) }
-          ','  => { let c = io::stdin().read_byte(); mem[p] = c as u8; }
+          '.'  => { io::print(format!("{}", mem[p] as char)) }
+          ','  => { let c = io::stdin().read_byte().unwrap(); mem[p] = c as u8; }
           '['  => {
             if mem[p] == 0 {
                 let mut seen_open = 0;
