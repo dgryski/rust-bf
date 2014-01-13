@@ -1,33 +1,51 @@
 
+extern mod extra;
 extern mod std;
+
 use std::io;
 use std::os;
 use std::vec;
-
 use std::io::File;
+
+use extra::getopts::{optflag,getopts};
 
 fn main() {
 
-     let args = os::args();
+    let args = os::args();
 
-    if args.len() != 2 {
-            let err = format!("usage: {} filename.bf\n",args[0]);
+    let program_name = args[0].clone();
+
+    let opts = ~[
+        optflag("C"),
+    ];
+
+    let matches = match getopts(args.tail(), opts) {
+        Ok(m) => { m }
+        Err(f) => { fail!(f.to_err_msg()) }
+    };
+
+    if matches.free.is_empty() || matches.free.len() != 1 {
+            let err = format!("usage: {} [-C] filename.bf\n", program_name);
             io::stderr().write_str(err);
             return;
     }
 
+    let input_file = matches.free[0].clone();
+
     let program : ~[u8] ;
     
-    match load_program(args[1]) {
+    match load_program(input_file) {
         Some(p) => { program = p; }
         None => { fail!( ~"no program loaded" ) }
     }
 
     let offsets = calculate_offsets(program);
 
-    run_program(program, offsets);
-//  output_c_code(program, offsets);
-
+    if matches.opt_present("C") {
+        output_c_code(program, offsets);
+    } else {
+        run_program(program, offsets);
+    }
 }
 
 fn load_program(filename : &str) -> Option<~[u8]> {
