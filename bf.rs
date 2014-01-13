@@ -142,27 +142,35 @@ fn run_program(program : &[u8], offsets : &[uint]) {
     }
 }
 
+fn indent(depth:int) {
+    for _ in range(0, depth)  {
+        io::print("\t")
+    }
+}
+
 fn output_c_code(program : &[u8], offsets : &[uint]) {
     io::println("
 #include <stdio.h>
 unsigned char mem [1024];
 int main() {
-unsigned char *p = mem;
+\tunsigned char *p = mem;
     ");
 
     let mut ip = 0;
     let program_size = program.len();
 
+    let mut depth = 1;
+
     while ip < program_size {
         match program[ip] as char {
-          '<' => { io::println(format!("p -= {};", offsets[ip])); ip += offsets[ip] - 1; }
-          '>' => { io::println(format!("p += {};", offsets[ip])); ip += offsets[ip] - 1; }
-          '+' => { io::println(format!("*p += {};", offsets[ip])); ip += offsets[ip] - 1;}
-          '-' => { io::println(format!("*p -= {};", offsets[ip])); ip += offsets[ip] - 1;}
-          '.' => { io::println("putchar(*p);"); }
-          ',' => { io::println("*p = (char)getchar();"); }
-          '[' => { io::println("while(*p) {"); }
-          ']' => { io::println("}"); }
+          '<' => { indent(depth);  io::println(format!("p -= {};", offsets[ip])); ip += offsets[ip] - 1; }
+          '>' => { indent(depth);  io::println(format!("p += {};", offsets[ip])); ip += offsets[ip] - 1; }
+          '+' => { indent(depth);  io::println(format!("*p += {};", offsets[ip])); ip += offsets[ip] - 1;}
+          '-' => { indent(depth);  io::println(format!("*p -= {};", offsets[ip])); ip += offsets[ip] - 1;}
+          '.' => { indent(depth);  io::println("putchar(*p);"); }
+          ',' => { indent(depth);  io::println("*p = (char)getchar();"); }
+          '[' => { indent(depth);  depth=depth+1; io::println("while(*p) {"); }
+          ']' => { depth=depth-1;  indent(depth); io::println("}"); }
           _ => { fail!( format!("unknown char in input: {}", program[ip] as char)); }
         }
         ip += 1;
