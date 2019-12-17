@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["Damian Gryski <damian@gryski.com>"]
 
 [dependencies]
-getopts = "0.2"
+getopts = "0.2.21"

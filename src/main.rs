@@ -1,20 +1,15 @@
-
 use std::env;
 use std::vec;
 
 use std::fs::File;
 use std::io;
 use std::io::Read;
-use std::io::Write;
 
 extern crate getopts;
 use getopts::Options;
 
 fn main() {
-
-
     let args: Vec<String> = env::args().collect();
-    let ref arg1 = args[1];
 
     let program_name = args[0].clone();
 
@@ -27,8 +22,7 @@ fn main() {
     };
 
     if matches.free.is_empty() || matches.free.len() != 1 {
-        let err = format!("usage: {} [-C] filename.bf\n", program_name);
-        io::stderr().write(err.as_bytes());
+        println!("usage: {} [-C] filename.bf\n", program_name);
         return;
     }
 
@@ -51,18 +45,26 @@ fn main() {
 }
 
 fn load_program(filename: String) -> Option<Vec<u8>> {
-
     let mut f = File::open(filename).expect("unable to open program");
 
     let mut program_str = String::new();
 
-    f.read_to_string(&mut program_str).expect("unable to read program");
+    f.read_to_string(&mut program_str)
+        .expect("unable to read program");
 
-    let program = program_str.bytes()
+    let program = program_str
+        .bytes()
         .filter_map(|c| {
             let c = c as char;
-            if c == '<' || c == '>' || c == '+' || c == '-' || c == '.' || c == ',' || c == '[' ||
-               c == ']' {
+            if c == '<'
+                || c == '>'
+                || c == '+'
+                || c == '-'
+                || c == '.'
+                || c == ','
+                || c == '['
+                || c == ']'
+            {
                 Some(c as u8)
             } else {
                 None
@@ -74,7 +76,6 @@ fn load_program(filename: String) -> Option<Vec<u8>> {
 }
 
 fn calculate_offsets(program: &vec::Vec<u8>) -> Vec<usize> {
-
     let mut offsets = vec![0usize; program.len()];
 
     let mut prev = program[0];
@@ -137,9 +138,7 @@ fn calculate_offsets(program: &vec::Vec<u8>) -> Vec<usize> {
     offsets
 }
 
-
 fn run_program(program: vec::Vec<u8>, offsets: vec::Vec<usize>) {
-
     let mut ip = 0;
     let mut p = 0;
 
@@ -147,7 +146,6 @@ fn run_program(program: vec::Vec<u8>, offsets: vec::Vec<usize>) {
     let program_size = program.len();
 
     while ip < program_size {
-
         match program[ip] as char {
             '<' => {
                 p -= offsets[ip];
@@ -198,12 +196,14 @@ fn indent(depth: usize) {
 }
 
 fn output_c_code(program: vec::Vec<u8>, offsets: vec::Vec<usize>) {
-    println!("
+    println!(
+        "
 #include <stdio.h>
 unsigned char mem [1024];
 int main() {{
 \tunsigned char *p = mem;
-    ");
+    "
+    );
 
     let mut ip = 0usize;
     let program_size = program.len();
