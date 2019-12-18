@@ -11,7 +11,7 @@ use getopts::Options;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let program_name = args[0].clone();
+    let program_name = &args[0];
 
     let mut opts = Options::new();
     opts.optflag("C", "", "generate C code");
@@ -75,7 +75,7 @@ fn load_program(filename: String) -> Option<Vec<u8>> {
     Some(program)
 }
 
-fn calculate_offsets(program: &vec::Vec<u8>) -> Vec<usize> {
+fn calculate_offsets(program: &[u8]) -> Vec<usize> {
     let mut offsets = vec![0usize; program.len()];
 
     let mut prev = program[0];
@@ -98,40 +98,44 @@ fn calculate_offsets(program: &vec::Vec<u8>) -> Vec<usize> {
 
     // precalculate jump locations
     for (i, p) in program.iter().enumerate() {
-        if *p == '[' as u8 {
-            let mut dst_ip = i;
+        match *p {
+            b'[' => {
+                let mut dst_ip = i;
 
-            let mut seen_open = 0;
-            loop {
-                dst_ip += 1;
-                if seen_open == 0 && program[dst_ip] == ']' as u8 {
-                    offsets[i] = dst_ip;
-                    break;
-                }
-                if program[dst_ip] == '[' as u8 {
-                    seen_open += 1;
-                }
-                if program[dst_ip] == ']' as u8 {
-                    seen_open -= 1;
+                let mut seen_open = 0;
+                loop {
+                    dst_ip += 1;
+                    if seen_open == 0 && program[dst_ip] == b']' {
+                        offsets[i] = dst_ip;
+                        break;
+                    }
+                    if program[dst_ip] == b'[' {
+                        seen_open += 1;
+                    }
+                    if program[dst_ip] == b']' {
+                        seen_open -= 1;
+                    }
                 }
             }
-        } else if *p == ']' as u8 {
-            let mut dst_ip = i;
+            b']' => {
+                let mut dst_ip = i;
 
-            let mut seen_close = 0;
-            loop {
-                dst_ip -= 1;
-                if seen_close == 0 && program[dst_ip] == '[' as u8 {
-                    offsets[i] = dst_ip;
-                    break;
-                }
-                if program[dst_ip] == ']' as u8 {
-                    seen_close += 1;
-                }
-                if program[dst_ip] == '[' as u8 {
-                    seen_close -= 1;
+                let mut seen_close = 0;
+                loop {
+                    dst_ip -= 1;
+                    if seen_close == 0 && program[dst_ip] == b'[' {
+                        offsets[i] = dst_ip;
+                        break;
+                    }
+                    if program[dst_ip] == b']' {
+                        seen_close += 1;
+                    }
+                    if program[dst_ip] == b'[' {
+                        seen_close -= 1;
+                    }
                 }
             }
+            _ => {}
         }
     }
 
@@ -146,37 +150,37 @@ fn run_program(program: vec::Vec<u8>, offsets: vec::Vec<usize>) {
     let program_size = program.len();
 
     while ip < program_size {
-        match program[ip] as char {
-            '<' => {
+        match program[ip] {
+            b'<' => {
                 p -= offsets[ip];
                 ip += offsets[ip] - 1;
             }
-            '>' => {
+            b'>' => {
                 p += offsets[ip];
                 ip += offsets[ip] - 1;
             }
-            '+' => {
+            b'+' => {
                 mem[p] = mem[p].wrapping_add(offsets[ip] as u8);
                 ip = ip.wrapping_add(offsets[ip] - 1)
             }
-            '-' => {
+            b'-' => {
                 mem[p] = mem[p].wrapping_sub(offsets[ip] as u8);
                 ip = ip.wrapping_add(offsets[ip] - 1)
             }
-            '.' => {
+            b'.' => {
                 print!("{}", mem[p] as char);
             }
-            ',' => {
+            b',' => {
                 let mut b = vec![0; 1];
                 let c = io::stdin().read(&mut b).unwrap();
                 mem[p] = c as u8;
             }
-            '[' => {
+            b'[' => {
                 if mem[p] == 0 {
                     ip = offsets[ip];
                 }
             }
-            ']' => {
+            b']' => {
                 if mem[p] != 0 {
                     ip = offsets[ip];
                 }
@@ -211,42 +215,42 @@ int main() {{
     let mut depth = 1;
 
     while ip < program_size {
-        match program[ip] as char {
-            '<' => {
+        match program[ip] {
+            b'<' => {
                 indent(depth);
                 println!("p -= {};", offsets[ip]);
                 ip += offsets[ip] - 1;
             }
-            '>' => {
+            b'>' => {
                 indent(depth);
                 println!("p += {};", offsets[ip]);
                 ip += offsets[ip] - 1;
             }
-            '+' => {
+            b'+' => {
                 indent(depth);
                 println!("*p += {};", offsets[ip]);
                 ip += offsets[ip] - 1;
             }
-            '-' => {
+            b'-' => {
                 indent(depth);
                 println!("*p -= {};", offsets[ip]);
                 ip += offsets[ip] - 1;
             }
-            '.' => {
+            b'.' => {
                 indent(depth);
                 println!("putchar(*p);");
             }
-            ',' => {
+            b',' => {
                 indent(depth);
                 println!("*p = (char)getchar();");
             }
-            '[' => {
+            b'[' => {
                 indent(depth);
-                depth = depth + 1;
+                depth += 1;
                 println!("while(*p) {{");
             }
-            ']' => {
-                depth = depth - 1;
+            b']' => {
+                depth -= 1;
                 indent(depth);
                 println!("}}");
             }
